@@ -18,7 +18,7 @@ The application does not include a custom training pipeline—MediaPipe Holistic
   https://github.com/Raulmora22/MonkeyFacer/blob/master/src/components/ImageDisplay.tsx
 - `src/App.tsx` — application root that mounts HolisticDetectors and ImageDisplay.  
   https://github.com/Raulmora22/MonkeyFacer/blob/master/src/App.tsx
-- `public/MonkeyFacer/images/` — images referenced by the app (smile, eureca, etc.)
+- `public/images/` — images referenced by the app (smile, eureca, etc.)
 
 ---
 
@@ -56,7 +56,7 @@ The application does not include a custom training pipeline—MediaPipe Holistic
 
 6. UI update
    - `ImageDisplay` reads `currentGesture` from `useGestureStore`.
-   - Based on the gesture, it loads and displays the corresponding image from `/MonkeyFacer/images/...`.
+   - Based on the gesture, it loads and displays the corresponding image from `/images/...`.
 
 ---
 
@@ -80,11 +80,13 @@ These options control model complexity and detection/tracking confidence thresho
 Gestures and how they are detected are defined in `src/func/gestures.ts`. The project defines three gesture types:
 
 Type declaration:
+
 ```ts
 type GestureType = "smile" | "serious" | "eureca";
 ```
 
-1) "eureca" — hands up
+1. "eureca" — hands up
+
 - Uses `results.poseLandmarks`.
 - Landmark indices used:
   - left shoulder: `poseLandmarks[11]`
@@ -94,7 +96,8 @@ type GestureType = "smile" | "serious" | "eureca";
 - Detection rule:
   - If `leftWrist.y < leftShoulder.y` OR `rightWrist.y < rightShoulder.y`, the function returns `"eureca"`.
 
-2) "smile" — smile detection (mouth aspect ratio)
+2. "smile" — smile detection (mouth aspect ratio)
+
 - Uses `results.faceLandmarks`.
 - Face landmark indices used:
   - left mouth corner: `face[291]`
@@ -107,10 +110,12 @@ type GestureType = "smile" | "serious" | "eureca";
   - Compute mouthAspectRatio = mouthHeight / mouthWidth
   - If `mouthAspectRatio > SMILE_THRESHOLD (0.35)`, returns `"smile"`.
 
-3) "serious" — neutral / fallback
+3. "serious" — neutral / fallback
+
 - If neither hands-up nor smile conditions match, `classifyGesture` returns `"serious"`.
 
 Classification function (summary):
+
 ```ts
 export function classifyGesture(results: Results): GestureType | null {
   if (detectHandsUp(results)) return "eureca";
@@ -120,11 +125,12 @@ export function classifyGesture(results: Results): GestureType | null {
 ```
 
 Gesture → image mapping (from `gestureToImage`):
+
 ```ts
 {
-  smile: "/MonkeyFacer/images/smile.png",
-  serious: "/MonkeyFacer/images/xd.png",
-  eureca: "/MonkeyFacer/images/eureca.png",
+  smile: "/images/smile.png",
+  serious: "/images/xd.png",
+  eureca: "/images/eureca.png",
 }
 ```
 
@@ -148,13 +154,14 @@ Gesture → image mapping (from `gestureToImage`):
   - The canvas is rendered with a horizontal flip (CSS class `scale-x-[-1]`), so the drawn output is mirrored relative to the incoming camera image.
 - ImageDisplay:
   - Shows a static image that corresponds to the currently detected gesture.
-  - The displayed image is taken from `/MonkeyFacer/images/...` paths.
+  - The displayed image is taken from `/images/...` paths.
 
 ---
 
 ## Example code excerpts (exact behavior)
 
 - Gesture store (Zustand):
+
 ```ts
 import { create } from "zustand";
 
@@ -172,6 +179,7 @@ export const useGestureStore = create<GestureStore>((set) => ({
 ```
 
 - ImageDisplay (reads store and shows mapped image):
+
 ```tsx
 import { useGestureStore } from "../stores/GestureStore";
 import { gestureToImage } from "../func/gestures";
@@ -181,10 +189,14 @@ export default function ImageDisplay() {
 
   const imageSrc = currentGesture
     ? gestureToImage[currentGesture]
-    : "/MonkeyFacer/images/ahhh.png";
+    : "/images/ahhh.png";
   return (
     <div className="w-[640px] h-[480px] shrink-0">
-      <img src={imageSrc} alt="Gesture Representation" className="w-full h-full object-cover rounded-md" />
+      <img
+        src={imageSrc}
+        alt="Gesture Representation"
+        className="w-full h-full object-cover rounded-md"
+      />
     </div>
   );
 }
@@ -200,17 +212,20 @@ export default function ImageDisplay() {
 ## How to run the project locally
 
 1. Clone the repository:
+
 ```bash
-git clone https://github.com/Raulmora22/MonkeyFacer.git
+git clone https://github.com/raulmoracode/MonkeyFacer.git
 cd MonkeyFacer
 ```
 
 2. Install dependencies (project uses pnpm in package.json, but npm or yarn can be used depending on environment):
+
 ```bash
 pnpm install
 ```
 
 3. Start development server:
+
 ```bash
 pnpm run dev
 ```
@@ -218,4 +233,3 @@ pnpm run dev
 4. Open the app in your browser (default Vite dev URL, e.g. http://localhost:5173).
 
 When the app runs it will request access to your webcam. The Holistic model will process frames and the UI will update with the detected gesture image.
-

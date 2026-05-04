@@ -2,36 +2,24 @@ type GestureType = "smile" | "serious" | "eureca";
 
 import type { Results } from "@mediapipe/holistic";
 export const gestureToImage: Record<GestureType, string> = {
-  smile: "/MonkeyFacer/images/smile.png",
-  serious: "/MonkeyFacer/images/xd.png",
-  eureca: "/MonkeyFacer/images/eureca.png",
+  smile: "/images/smile.png",
+  serious: "/images/xd.png",
+  eureca: "/images/eureca.png",
 };
 
-const SMILE_THRESHOLD = 0.35;
+const SMILENORMAL = 0.4;
+const SMILEHARD = 0.6;
 
 function calculateDistance(
   point1: { x: number; y: number },
-  point2: { x: number; y: number }
+  point2: { x: number; y: number },
 ): number {
   return Math.sqrt(
-    Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
+    Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2),
   );
 }
 
-function detectHandsUp(results: Results): boolean {
-  if (!results.poseLandmarks) return false;
-
-  const landmarks = results.poseLandmarks;
-
-  const leftShoulder = landmarks[11];
-  const rightShoulder = landmarks[12];
-  const leftWrist = landmarks[15];
-  const rightWrist = landmarks[16];
-
-  return leftWrist.y < leftShoulder.y || rightWrist.y < rightShoulder.y;
-}
-
-function detectSmile(results: Results): boolean {
+function detectSmile(results: Results, smile: "normal" | "hard"): boolean {
   if (!results.faceLandmarks) return false;
 
   const face = results.faceLandmarks;
@@ -48,7 +36,23 @@ function detectSmile(results: Results): boolean {
 
   const mouthAspectRatio = mouthHeight / mouthWidth;
 
-  return mouthAspectRatio > SMILE_THRESHOLD;
+  return mouthAspectRatio > (smile === "normal" ? SMILENORMAL : SMILEHARD);
+}
+
+function detectHandsUp(results: Results): boolean {
+  if (!results.poseLandmarks) return false;
+
+  const landmarks = results.poseLandmarks;
+
+  const leftShoulder = landmarks[11];
+  const rightShoulder = landmarks[12];
+  const leftWrist = landmarks[15];
+  const rightWrist = landmarks[16];
+
+  const handsUp =
+    leftWrist.y < leftShoulder.y || rightWrist.y < rightShoulder.y;
+
+  return detectSmile(results, "normal") && handsUp;
 }
 
 export function classifyGesture(results: Results): GestureType | null {
@@ -56,7 +60,7 @@ export function classifyGesture(results: Results): GestureType | null {
     return "eureca";
   }
 
-  if (detectSmile(results)) {
+  if (detectSmile(results, "hard")) {
     return "smile";
   }
 
